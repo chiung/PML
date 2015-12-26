@@ -1,0 +1,17 @@
+{
+    "contents" : "#load library\nlibrary('caret')\nlibrary('randomForest')\nlibrary('e1071')\nlibrary('RANN')\n#read in csv\ntraining_org<-read.csv(file=\"C:\\\\Users\\\\peyter\\\\Documents\\\\R ML Assignment\\\\pml-training.csv\",na.strings=c(\"\", \"NA\", \"NULL\"))\ntesting_org<-read.csv(file=\"C:\\\\Users\\\\peyter\\\\Documents\\\\R ML Assignment\\\\pml-testing.csv\",na.strings=c(\"\", \"NA\", \"NULL\"))\n#preprocess training_org by removing NA values\ntrainingNApp<- training_org[ , colSums(is.na(training_org)) == 0]\nfilter1 = c('X', 'user_name', 'raw_timestamp_part_1', 'raw_timestamp_part_2', 'cvtd_timestamp', 'new_window', 'num_window')\ntraining_filter <- trainingNApp[, -which(names(trainingNApp) %in% filter1)]\n#preprocess testing_org by removing NA values\ntestingNApp<- testing_org[ , colSums(is.na(testing_org)) == 0]\nfilter1 = c('X', 'user_name', 'raw_timestamp_part_1', 'raw_timestamp_part_2', 'cvtd_timestamp', 'new_window', 'num_window')\ntesting_filter <- testingNApp[, -which(names(testingNApp) %in% filter1)]\n#continue preprocess by removing near zero variance for training\nzeroVar= nearZeroVar(training_filter[sapply(training_filter, is.numeric)], saveMetrics = TRUE)\ntraining.nonzerovar = training_filter[,zeroVar[, 'nzv']==0]\n#continue preprocess by removing near zero variance for testing\nzeroVartest= nearZeroVar(testing_filter[sapply(testing_filter, is.numeric)], saveMetrics = TRUE)\ntesting.nonzerovar = testing_filter[,zeroVar[, 'nzv']==0]\n#continue preprocess by removing highly correlated predictor variable for training\ncorrMatrix <- cor(na.omit(training.nonzerovar[sapply(training.nonzerovar, is.numeric)]))\ndim(corrMatrix)\nremovecor = findCorrelation(corrMatrix, cutoff = .90, verbose = TRUE)\ntraining.decor = training.nonzerovar[,-removecor]\n#continue preprocess by removing highly correlated predictor variable for testing\ncorrMatrixtest <- cor(na.omit(testing.nonzerovar[sapply(testing.nonzerovar, is.numeric)]))\ndim(corrMatrixtest)\nremovecortest = findCorrelation(corrMatrixtest, cutoff = .90, verbose = TRUE)\ntesting.decor = testing.nonzerovar[,-removecor]\n#in sample error checking\ninTrain <- createDataPartition(y=training.decor$classe, p=0.7, list=FALSE)\ntraining <- training.decor[inTrain,]\ntesting <- training.decor[-inTrain,]\n#dim(training);dim(testing)\ngbm_model1<-train(classe ~ ., method=\"gbm\", data=training)\ngbm_predict1 <- predict(gbm_model1,newdata=testing)\nconfusionMatrix(gbm_predict1, testing$classe)\n#rf.training<-randomForest(classe~.,data=training,ntree=100, importance=TRUE)\n#tree.pred=predict(rf.training,testing,type=\"class\")\n#test on actual data\ngbm_predict2<-predict(gbm_model1, newdata=testing.decor)\n#function to write labels\npml_write_files = function(x){\n  n = length(x)\n  for(i in 1:n){\n    filename = paste0(\"problem_id_\",i,\".txt\")\n    write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)\n  }\n}\npml_write_files(gbm_predict2)\n",
+    "created" : 1451150387882.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3786312899",
+    "id" : "552008C8",
+    "lastKnownWriteTime" : 1451149714,
+    "path" : "~/R ML Assignment/R ML Assignment New Try.R",
+    "project_path" : "R ML Assignment New Try.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "source_on_save" : false,
+    "type" : "r_source"
+}
